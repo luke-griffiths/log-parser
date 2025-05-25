@@ -21,23 +21,23 @@ CSVFile = NewType('CSVFile', Path)
 @dataclass
 class LogConfig:
     """
-    Configuration info that helps a LogParser interact with a log
+    Configuration info that helps a LogCompressor interact with a log
 
     Attributes
         comparator: The log field used for sorting. Usually a datetime.
         schema_overrides: Explicitly declare data types for log fields, 
-            which can improve LogParser performance.
+            which can improve LogCompressor performance.
         preferred_order: Allows specification of field order 
-            in LogParser output.
+            in LogCompressor output.
     """
     comparator: str
     schema_overrides: dict[str, Any] | None = None
     preferred_order: list[str] | None = None
 
 
-class LogParser:
+class LogCompressor:
     """
-    LogParser converts log files into a format that can be queried 
+    LogCompressor converts log files into a format that can be queried 
     and stored efficiently
     """
     def __init__(self, log: JSONFile | ParquetFile, config: LogConfig):
@@ -55,11 +55,10 @@ class LogParser:
                 )
             case _:
                 raise ValueError(f"Unknown file extension type '{ext}'")
-            
         self._columns = self._lf.collect_schema().names()
         if self._comparator not in self._columns:
             raise ValueError(
-                f"LogParser requires a valid comparator\n"
+                f"LogCompressor requires a valid comparator\n"
                 f"'{self._comparator}' not found in {self._columns}"
             )
         
@@ -76,7 +75,7 @@ class LogParser:
         first_n = self._lf.head(n)
         last_n = self._lf.tail(n)
         df = pl.concat([first_n, last_n]).unique().sort(self._comparator).collect()
-        s = f"LogParser ({hex(id(self))}) with {row_count} log entries\n"
+        s = f"LogCompressor ({hex(id(self))}) with {row_count} log entries\n"
         if df.height > MAX_DISPLAY_ROWS:
             s += f"Showing first and last {n} rows\n"
         return s + str(df)
