@@ -25,8 +25,10 @@ class LogConfig:
 
     Attributes
         comparator: The log field used for sorting. Usually a datetime.
-        schema_overrides: Explicitly declare data types for log fields, which can improve LogParser performance.
-        preferred_order: Allows specification of field order in LogParser output.
+        schema_overrides: Explicitly declare data types for log fields, 
+            which can improve LogParser performance.
+        preferred_order: Allows specification of field order 
+            in LogParser output.
     """
     comparator: str
     schema_overrides: dict[str, Any] | None = None
@@ -35,7 +37,8 @@ class LogConfig:
 
 class LogParser:
     """
-    LogParser converts log files into a format that can be queried and stored efficiently
+    LogParser converts log files into a format that can be queried 
+    and stored efficiently
     """
     def __init__(self, log: JSONFile | ParquetFile, config: LogConfig):
         self._log = Path(log)
@@ -47,18 +50,25 @@ class LogParser:
             case FileExt.PARQUET:
                 self._lf = pl.scan_parquet(self._log)
             case FileExt.JSON:
-                self._lf = pl.scan_ndjson(self._log, schema_overrides=self._schema_overrides)
+                self._lf = pl.scan_ndjson(
+                    self._log, schema_overrides=self._schema_overrides
+                )
             case _:
                 raise ValueError(f"Unknown file extension type '{ext}'")
             
         self._columns = self._lf.collect_schema().names()
         if self._comparator not in self._columns:
-            raise ValueError(f"LogParser requires a valid comparator\n'{self._comparator}' not found in {self._columns}")
+            raise ValueError(
+                f"LogParser requires a valid comparator\n"
+                f"'{self._comparator}' not found in {self._columns}"
+            )
         
         if self._config.preferred_order:
             # order the LazyFrame columns based on preferences
             other_cols = set(self._columns) - set(self._config.preferred_order)
-            self._lf = self._lf.select(self._config.preferred_order + list(other_cols))
+            self._lf = self._lf.select(
+                self._config.preferred_order + list(other_cols)
+            )
                         
     def __str__(self) -> str:
         n = MAX_DISPLAY_ROWS // 2
@@ -73,7 +83,8 @@ class LogParser:
     
     @property
     def lf(self) -> pl.LazyFrame:
-        """Access to the logs in lazy form. Calling 'collect' on larger than memory log files will trigger a MemoryError"""
+        """Access to the logs in lazy form. Calling 'collect' on larger 
+        than memory log files will trigger a MemoryError"""
         return self._lf
     
     def save_log(self, ext: str, overwrite: bool = False) -> None:
@@ -111,11 +122,14 @@ class LogParser:
         Returns all log entries matching the input expression
 
         With log files that exceed memory, calling this method may fail
-        when attempting to allocate memory for a DataFrame larger than memory. It is up to the caller to handle potential MemoryError and try again with a more narrow expression.
+        when attempting to allocate memory for a DataFrame larger than memory.
+        It is up to the caller to handle potential MemoryError 
+        and try again with a more narrow expression.
 
         Attributes
             expr: A Polars expression determining which entries to filter out.
-            return_ordered: Return the result ordered by comparator field. Defaults to false for better performance.
+            return_ordered: Return the result ordered by comparator field.
+                Defaults to false for better performance.
         """
         lf = self._lf.filter(expr)
         if return_ordered:
