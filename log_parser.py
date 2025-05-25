@@ -135,4 +135,4 @@ class LogParser:
         if return_ordered:
             lf = lf.sort(self._comparator)
         df = lf.collect()
-        return [] if df.is_empty() else df
+        return None if df.is_empty() else df
